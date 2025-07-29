@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Zgłoszeń IT - Logowanie</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%); /* Biało-czerwony gradient */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .company-logo {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            margin: 0 auto 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .company-logo-img {
+            width: 100%;
+            height: auto;
+            max-width: 300px;
+        }
+
+        .logo-fallback {
+            display: none;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            background-color: #6b7280;
+            border-radius: 50%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        label {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #FF4B2B; /* Czerwony kolor focus */
+            box-shadow: 0 0 0 3px rgba(255, 75, 43, 0.1);
+            transform: translateY(-2px);
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%); /* Biało-czerwony gradient */
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 75, 43, 0.3);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(-1px);
+        }
+
+        .demo-accounts {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .demo-accounts h3 {
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .demo-accounts p {
+            margin: 0.25rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .company-logo-img {
+                max-width: 100px; /* Mniejsze logo na tabletach */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .company-logo-img {
+                max-width: 80px; /* Jeszcze mniejsze logo na telefonach */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+    <div class="company-logo">
+        <!-- Tutaj wstaw swoje logo firmy -->
+        <img src="logo-firmy.png" alt="Logo Firmy" class="company-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="logo-fallback">
+            <i data-lucide="building-2" style="width: 40px; height: 40px;"></i>
+        </div>
+    </div>
+    
+    <h1>System IT</h1>
+    <p class="subtitle">Zaloguj się do panelu zgłoszeń</p>
+    
+    <form action="/login" method="POST">
+        <div class="form-group">
+            <label for="email">Adres email</label>
+            <input type="email" id="email" name="email" placeholder="twoj.email@firma.pl" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Hasło</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+        
+        <button type="submit">
+            Zaloguj się
+        </button>
+    </form>
+
+    <div class="demo-accounts">
+        <h3>Konta testowe:</h3>
+        <p><strong>Admin:</strong> admin@example.com / admin123</p>
+        <p><strong>Użytkownik:</strong> user@example.com / user123</p>
+        <p><strong>Użytkownik:</strong> anna@example.com / anna123</p>
+    </div>
+</div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

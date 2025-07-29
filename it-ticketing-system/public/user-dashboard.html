@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Użytkownika - System IT</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i data-lucide="user"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Panel Użytkownika</h1>
+                    <p>Twoje zgłoszenia IT</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="user-info" id="userInfo">Ładowanie...</span>
+                <a href="/logout" class="logout-btn">
+                    <i data-lucide="log-out"></i>
+                    <span>Wyloguj</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2>Witaj w panelu użytkownika! 👋</h2>
+            <p>Zarządzaj swoimi zgłoszeniami IT</p>
+        </div>
+
+        <!-- User Stats -->
+        <div class="stats-grid" id="userStats">
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Twoje otwarte zgłoszenia</p>
+                        <p id="userOpenTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="clock" style="color: #f59e0b;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>W trakcie realizacji</p>
+                        <p id="userInProgressTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="clock" style="color: #3b82f6;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Rozwiązane</p>
+                        <p id="userResolvedTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="check-circle" style="color: #10b981;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Wszystkie zgłoszenia</p>
+                        <p id="userTotalTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="ticket" style="color: #8b5cf6;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <h3>Szybkie akcje</h3>
+            <div class="actions-grid">
+                <button class="action-card add-ticket" onclick="location.href='/add-ticket'">
+                    <div class="action-header">
+                        <div>
+                            <h3>Dodaj zgłoszenie</h3>
+                            <p>Zgłoś nowy problem lub żądanie pomocy</p>
+                        </div>
+                        <div class="action-icon">
+                            <i data-lucide="plus"></i>
+                        </div>
+                    </div>
+                </button>
+                <button class="action-card list-tickets" onclick="location.href='/list-tickets'">
+                    <div class="action-header">
+                        <div>
+                            <h3>Moje zgłoszenia</h3>
+                            <p>Przeglądaj status swoich zgłoszeń</p>
+                        </div>
+                        <div class="action-icon">
+                            <i data-lucide="list"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Tickets -->
+        <div class="activity-section">
+            <div class="activity-header">
+                <h3>Twoje ostatnie zgłoszenia</h3>
+            </div>
+            <div class="activity-content" id="userRecentTickets">
+                <div class="loading">Ładowanie zgłoszeń...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>© 2025 System IT. Panel Użytkownika.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Load user info
+        fetch('/api/user')
+            .then(response => response.json())
+            .then(user => {
+                document.getElementById('userInfo').textContent = user.name;
+            })
+            .catch(error => {
+                console.error('Error loading user info:', error);
+            });
+
+        // Load user tickets and stats
+        fetch('/api/tickets')
+            .then(response => response.json())
+            .then(tickets => {
+                // Calculate user stats
+                const openTickets = tickets.filter(t => t.status === 'Otwarte').length;
+                const inProgressTickets = tickets.filter(t => t.status === 'W trakcie').length;
+                const resolvedTickets = tickets.filter(t => t.status === 'Rozwiązane').length;
+                const totalTickets = tickets.length;
+
+                // Update stats
+                document.getElementById('userOpenTickets').textContent = openTickets;
+                document.getElementById('userInProgressTickets').textContent = inProgressTickets;
+                document.getElementById('userResolvedTickets').textContent = resolvedTickets;
+                document.getElementById('userTotalTickets').textContent = totalTickets;
+
+                // Show recent tickets
+                const recentTickets = tickets
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+
+                const ticketsHtml = recentTickets.map(ticket => {
+                    const date = new Date(ticket.date);
+                    const timeAgo = getTimeAgo(date);
+                    const statusClass = getStatusClass(ticket.status);
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-dot ${statusClass}"></div>
+                            <div class="activity-details">
+                                <h4>Zgłoszenie #${ticket.id}: ${ticket.problem}</h4>
+                                <p>${ticket.description.substring(0, 100)}${ticket.description.length > 100 ? '...' : ''}</p>
+                                <div class="activity-meta">
+                                    <span>Status: ${ticket.status}</span>
+                                    <span>Priorytet: ${ticket.priority}</span>
+                                    <span class="time">${timeAgo}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('userRecentTickets').innerHTML = ticketsHtml || '<p>Nie masz jeszcze żadnych zgłoszeń</p>';
+            })
+            .catch(error => {
+                console.error('Error loading tickets:', error);
+                document.getElementById('userRecentTickets').innerHTML = '<p>Błąd ładowania zgłoszeń</p>';
+            });
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+            
+            if (diffInMinutes < 60) {
+                return `${diffInMinutes} minut temu`;
+            } else if (diffInMinutes < 1440) {
+                return `${Math.floor(diffInMinutes / 60)} godzin temu`;
+            } else {
+                return `${Math.floor(diffInMinutes / 1440)} dni temu`;
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status.toLowerCase()) {
+                case 'otwarte': return 'pending';
+                case 'w trakcie': return 'updated';
+                case 'rozwiązane': return 'completed';
+                default: return 'pending';
+            }
+        }
+    </script>
+</body>
+</html>

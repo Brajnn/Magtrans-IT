@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodaj zgłoszenie - System IT</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i data-lucide="building-2"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Nowe zgłoszenie</h1>
+                    <p>Opisz swój problem IT</p>
+                </div>
+            </div>
+            <a href="/dashboard" class="back-btn">
+                <i data-lucide="arrow-left"></i>
+                <span>Wróć do panelu</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Nowe zgłoszenie IT</h2>
+                <p>Opisz swój problem, a nasz zespół IT pomoże Ci go rozwiązać</p>
+            </div>
+
+            <form action="/submit-ticket" method="POST" id="ticketForm">
+                <div class="form-group">
+                    <label for="problem">Typ problemu *</label>
+                    <select id="problem" name="problem" required>
+                        <option value="">Wybierz typ problemu</option>
+                        <option value="Komputer">🖥️ Problem z komputerem</option>
+                        <option value="Drukarka">🖨️ Problem z drukarką</option>
+                        <option value="Internet">🌐 Problem z internetem</option>
+                        <option value="Email">📧 Problem z emailem</option>
+                        <option value="Oprogramowanie">💻 Problem z oprogramowaniem</option>
+                        <option value="Hasło">🔑 Resetowanie hasła</option>
+                        <option value="Sprzęt">⚙️ Problem ze sprzętem</option>
+                        <option value="Sieć">📡 Problem z siecią</option>
+                        <option value="Telefon">📞 Problem z telefonem</option>
+                        <option value="Dostęp">🚪 Problem z dostępem do systemu</option>
+                        <option value="Backup">💾 Problem z kopią zapasową</option>
+                        <option value="Inne">❓ Inne</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="priority">Priorytet</label>
+                    <select id="priority" name="priority">
+                        <option value="Niski">🟢 Niski - może poczekać</option>
+                        <option value="Normalny" selected>🟡 Normalny - standardowe zgłoszenie</option>
+                        <option value="Wysoki">🟠 Wysoki - pilne</option>
+                        <option value="Krytyczny">🔴 Krytyczny - blokuje pracę</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Szczegółowy opis problemu *</label>
+                    <textarea 
+                        id="description" 
+                        name="description" 
+                        placeholder="Opisz szczegółowo swój problem. Podaj informacje takie jak:&#10;&#10;• Co dokładnie się dzieje?&#10;• Kiedy problem wystąpił?&#10;• Jakie komunikaty błędów widzisz?&#10;• Co robiłeś przed wystąpieniem problemu?&#10;• Czy problem występuje stale czy sporadycznie?&#10;&#10;Im więcej szczegółów podasz, tym szybciej będziemy mogli Ci pomóc..."
+                        required
+                        rows="8"
+                        minlength="20"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span> / minimum 20 znaków
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="location.href='/dashboard'">
+                        <i data-lucide="x"></i>
+                        Anuluj
+                    </button>
+                    <button type="submit" class="submit-btn">
+                        <i data-lucide="send"></i>
+                        Wyślij zgłoszenie
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Character counter for description
+        const descriptionTextarea = document.getElementById('description');
+        const charCount = document.getElementById('charCount');
+
+        descriptionTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            charCount.textContent = length;
+            
+            if (length < 20) {
+                charCount.style.color = '#ef4444';
+            } else {
+                charCount.style.color = '#10b981';
+            }
+            
+            // Auto-resize textarea
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Form validation
+        document.getElementById('ticketForm').addEventListener('submit', function(e) {
+            const problem = document.getElementById('problem').value;
+            const description = document.getElementById('description').value;
+
+            if (!problem) {
+                e.preventDefault();
+                alert('Proszę wybrać typ problemu');
+                document.getElementById('problem').focus();
+                return;
+            }
+
+            if (description.length < 20) {
+                e.preventDefault();
+                alert('Opis problemu musi zawierać co najmniej 20 znaków');
+                document.getElementById('description').focus();
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = document.querySelector('.submit-btn');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2"></i> Wysyłanie...';
+            submitBtn.disabled = true;
+            
+            // Re-initialize icons for the loader
+            lucide.createIcons();
+            
+            // Add spinner animation
+            const loader = submitBtn.querySelector('[data-lucide="loader-2"]');
+            if (loader) {
+                loader.style.animation = 'spin 1s linear infinite';
+            }
+        });
+
+        // Add CSS for spinner animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Auto-focus first field
+        document.getElementById('problem').focus();
+    </script>
+</body>
+</html>

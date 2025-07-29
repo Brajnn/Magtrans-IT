@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administratora - System IT</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i data-lucide="building-2"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Panel Administratora</h1>
+                    <p>Zarządzanie systemem IT</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="user-info" id="userInfo">Ładowanie...</span>
+                <a href="/logout" class="logout-btn">
+                    <i data-lucide="log-out"></i>
+                    <span>Wyloguj</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2>Witaj w panelu administratora! 👨‍💼</h2>
+            <p>Zarządzaj wszystkimi zgłoszeniami IT w organizacji</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Otwarte zgłoszenia</p>
+                        <p id="openTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="clock" style="color: #f59e0b;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>W trakcie realizacji</p>
+                        <p id="inProgressTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="clock" style="color: #3b82f6;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Rozwiązane dzisiaj</p>
+                        <p id="todayResolved">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="check-circle" style="color: #10b981;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Wszystkie zgłoszenia</p>
+                        <p id="totalTickets">-</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="ticket" style="color: #8b5cf6;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <h3>Akcje administratora</h3>
+            <div class="actions-grid">
+                <button class="action-card admin-view" onclick="location.href='/list-tickets'">
+                    <div class="action-header">
+                        <div>
+                            <h3>Wszystkie zgłoszenia</h3>
+                            <p>Przeglądaj i zarządzaj wszystkimi zgłoszeniami w systemie</p>
+                        </div>
+                        <div class="action-icon">
+                            <i data-lucide="list"></i>
+                        </div>
+                    </div>
+                </button>
+                <button class="action-card add-ticket" onclick="location.href='/add-ticket'">
+                    <div class="action-header">
+                        <div>
+                            <h3>Dodaj zgłoszenie</h3>
+                            <p>Utwórz nowe zgłoszenie w imieniu użytkownika</p>
+                        </div>
+                        <div class="action-icon">
+                            <i data-lucide="plus"></i>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-section">
+            <div class="activity-header">
+                <h3>Ostatnia aktywność w systemie</h3>
+            </div>
+            <div class="activity-content" id="recentActivity">
+                <div class="loading">Ładowanie aktywności...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>© 2025 System IT. Panel Administratora.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Load user info
+        fetch('/api/user')
+            .then(response => response.json())
+            .then(user => {
+                document.getElementById('userInfo').textContent = `${user.name} (${user.role})`;
+            })
+            .catch(error => {
+                console.error('Error loading user info:', error);
+            });
+
+        // Load stats
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(stats => {
+                document.getElementById('openTickets').textContent = stats.open;
+                document.getElementById('inProgressTickets').textContent = stats.inProgress;
+                document.getElementById('todayResolved').textContent = stats.todayClosed;
+                document.getElementById('totalTickets').textContent = stats.total;
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+            });
+
+        // Load recent activity
+        fetch('/api/tickets')
+            .then(response => response.json())
+            .then(tickets => {
+                const recentTickets = tickets
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+
+                const activityHtml = recentTickets.map(ticket => {
+                    const date = new Date(ticket.date);
+                    const timeAgo = getTimeAgo(date);
+                    const statusClass = getStatusClass(ticket.status);
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-dot ${statusClass}"></div>
+                            <div class="activity-details">
+                                <h4>Zgłoszenie #${ticket.id}: ${ticket.problem}</h4>
+                                <p>${ticket.description.substring(0, 100)}${ticket.description.length > 100 ? '...' : ''}</p>
+                                <div class="activity-meta">
+                                    <span>Użytkownik: ${ticket.email}</span>
+                                    <span>Status: ${ticket.status}</span>
+                                    <span class="time">${timeAgo}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('recentActivity').innerHTML = activityHtml || '<p>Brak aktywności</p>';
+            })
+            .catch(error => {
+                console.error('Error loading activity:', error);
+                document.getElementById('recentActivity').innerHTML = '<p>Błąd ładowania aktywności</p>';
+            });
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+            
+            if (diffInMinutes < 60) {
+                return `${diffInMinutes} minut temu`;
+            } else if (diffInMinutes < 1440) {
+                return `${Math.floor(diffInMinutes / 60)} godzin temu`;
+            } else {
+                return `${Math.floor(diffInMinutes / 1440)} dni temu`;
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status.toLowerCase()) {
+                case 'otwarte': return 'pending';
+                case 'w trakcie': return 'updated';
+                case 'rozwiązane': return 'completed';
+                default: return 'pending';
+            }
+        }
+    </script>
+</body>
+</html>

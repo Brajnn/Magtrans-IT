@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista zgłoszeń - System IT</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i data-lucide="building-2"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Lista zgłoszeń</h1>
+                    <p id="pageSubtitle">Twoje zgłoszenia IT</p>
+                </div>
+            </div>
+            <a href="/dashboard" class="back-btn">
+                <i data-lucide="arrow-left"></i>
+                <span>Wróć do panelu</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h2 id="pageTitle">Twoje zgłoszenia</h2>
+            <p id="pageDescription">Przeglądaj status swoich zgłoszeń IT</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="statusFilter">Status:</label>
+                    <select id="statusFilter">
+                        <option value="">Wszystkie</option>
+                        <option value="Otwarte">Otwarte</option>
+                        <option value="W trakcie">W trakcie</option>
+                        <option value="Rozwiązane">Rozwiązane</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="problemFilter">Typ problemu:</label>
+                    <select id="problemFilter">
+                        <option value="">Wszystkie</option>
+                        <option value="Komputer">Komputer</option>
+                        <option value="Drukarka">Drukarka</option>
+                        <option value="Internet">Internet</option>
+                        <option value="Email">Email</option>
+                        <option value="Oprogramowanie">Oprogramowanie</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                <button class="clear-filters-btn" onclick="clearFilters()">
+                    <i data-lucide="x"></i>
+                    Wyczyść filtry
+                </button>
+            </div>
+        </div>
+
+        <!-- Tickets Container -->
+        <div class="tickets-container">
+            <div class="tickets-header">
+                <h3>
+                    <span id="ticketsCount">Ładowanie...</span>
+                    <span class="tickets-actions">
+                        <button class="refresh-btn" onclick="loadTickets()" title="Odśwież listę">
+                            <i data-lucide="refresh-cw"></i>
+                        </button>
+                    </span>
+                </h3>
+            </div>
+            <div class="tickets-list" id="ticketsList">
+                <div class="loading">
+                    <i data-lucide="loader-2" style="animation: spin 1s linear infinite;"></i>
+                    Ładowanie zgłoszeń...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        let allTickets = [];
+        let currentUser = null;
+
+        // Load user info and tickets
+        Promise.all([
+            fetch('/api/user').then(r => r.json()),
+            fetch('/api/tickets').then(r => r.json())
+        ]).then(([user, tickets]) => {
+            currentUser = user;
+            allTickets = tickets;
+            
+            // Update page title based on user role
+            if (user.role === 'admin') {
+                document.getElementById('pageTitle').textContent = 'Wszystkie zgłoszenia';
+                document.getElementById('pageDescription').textContent = 'Zarządzaj wszystkimi zgłoszeniami w systemie';
+                document.getElementById('pageSubtitle').textContent = 'Panel administratora';
+            }
+            
+            renderTickets(allTickets);
+        }).catch(error => {
+            console.error('Error loading data:', error);
+            document.getElementById('ticketsList').innerHTML = '<p class="error">Błąd ładowania zgłoszeń</p>';
+        });
+
+        function renderTickets(tickets) {
+            const ticketsList = document.getElementById('ticketsList');
+            const ticketsCount = document.getElementById('ticketsCount');
+            
+            ticketsCount.textContent = `Zgłoszenia (${tickets.length})`;
+            
+            if (tickets.length === 0) {
+                ticketsList.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="inbox" style="width: 3rem; height: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
+                        <h3>Brak zgłoszeń</h3>
+                        <p>Nie ma zgłoszeń spełniających wybrane kryteria</p>
+                        <a href="/add-ticket" class="add-ticket-btn">
+                            <i data-lucide="plus"></i>
+                            Dodaj pierwsze zgłoszenie
+                        </a>
+                    </div>
+                `;
+            } else {
+                const ticketsHtml = tickets.map(ticket => {
+                    const date = new Date(ticket.date);
+                    const formattedDate = date.toLocaleDateString('pl-PL', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    return `
+                        <div class="ticket-item">
+                            <div class="ticket-header">
+                                <div class="ticket-main-info">
+                                    <div class="ticket-title">${getEmojiForProblem(ticket.problem)} ${ticket.problem}</div>
+                                    <div class="ticket-meta">
+                                        Zgłoszenie #${ticket.id}
+                                        ${currentUser && currentUser.role === 'admin' ? ` • ${ticket.email}` : ''}
+                                        • ${formattedDate}
+                                    </div>
+                                </div>
+                                <div class="ticket-badges">
+                                    <span class="ticket-status ${getStatusClass(ticket.status)}">${ticket.status}</span>
+                                    <span class="ticket-priority ${getPriorityClass(ticket.priority)}">${ticket.priority}</span>
+                                </div>
+                            </div>
+                            <div class="ticket-description">${ticket.description}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                ticketsList.innerHTML = ticketsHtml;
+            }
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
+        function getEmojiForProblem(problem) {
+            const emojis = {
+                'Komputer': '🖥️',
+                'Drukarka': '🖨️',
+                'Internet': '🌐',
+                'Email': '📧',
+                'Oprogramowanie': '💻',
+                'Hasło': '🔑',
+                'Sprzęt': '⚙️',
+                'Sieć': '📡',
+                'Telefon': '📞',
+                'Dostęp': '🚪',
+                'Backup': '💾',
+                'Inne': '❓'
+            };
+            return emojis[problem] || '❓';
+        }
+
+        function getStatusClass(status) {
+            switch(status.toLowerCase()) {
+                case 'otwarte': return 'status-open';
+                case 'w trakcie': return 'status-pending';
+                case 'rozwiązane': return 'status-closed';
+                default: return 'status-open';
+            }
+        }
+
+        function getPriorityClass(priority) {
+            switch(priority.toLowerCase()) {
+                case 'niski': return 'priority-low';
+                case 'normalny': return 'priority-normal';
+                case 'wysoki': return 'priority-high';
+                case 'krytyczny': return 'priority-critical';
+                default: return 'priority-normal';
+            }
+        }
+
+        // Filter functionality
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('problemFilter').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const problemFilter = document.getElementById('problemFilter').value;
+            
+            let filteredTickets = allTickets;
+            
+            if (statusFilter) {
+                filteredTickets = filteredTickets.filter(ticket => ticket.status === statusFilter);
+            }
+            
+            if (problemFilter) {
+                filteredTickets = filteredTickets.filter(ticket => ticket.problem === problemFilter);
+            }
+            
+            renderTickets(filteredTickets);
+        }
+
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('problemFilter').value = '';
+            renderTickets(allTickets);
+        }
+
+        function loadTickets() {
+            const refreshBtn = document.querySelector('.refresh-btn');
+            refreshBtn.style.animation = 'spin 1s linear infinite';
+            
+            fetch('/api/tickets')
+                .then(response => response.json())
+                .then(tickets => {
+                    allTickets = tickets;
+                    applyFilters();
+                    refreshBtn.style.animation = '';
+                })
+                .catch(error => {
+                    console.error('Error refreshing tickets:', error);
+                    refreshBtn.style.animation = '';
+                });
+        }
+
+        // Add CSS for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

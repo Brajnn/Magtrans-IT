@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel IT - Dashboard</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%);
+            min-height: 100vh;
+            color: #1f2937;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: #dc2626;
+            background: transparent;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .logout-btn:hover {
+            background: #fef2f2;
+            transform: translateY(-1px);
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-section {
+            margin-bottom: 2rem;
+        }
+
+        .welcome-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-section p {
+            font-size: 1.125rem;
+            color: #6b7280;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f3f4f6;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-info p:first-child {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-info p:last-child {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .stat-icon {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: #f9fafb;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .actions-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            text-decoration: none;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .action-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px) scale(1.02);
+        }
+
+        .add-ticket {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .list-tickets {
+            background: linear-gradient(135deg, #10b981, #047857);
+        }
+
+        .action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .action-icon {
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .action-card:hover .action-icon {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .action-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-card p {
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .activity-section {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f3f4f6;
+            overflow: hidden;
+        }
+
+        .activity-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .activity-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .activity-content {
+            padding: 1.5rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .activity-item:hover {
+            background: #f9fafb;
+        }
+
+        .activity-item:not(:last-child) {
+            margin-bottom: 1rem;
+        }
+
+        .activity-dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            margin-top: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .activity-dot.pending { background: #f59e0b; }
+        .activity-dot.completed { background: #10b981; }
+        .activity-dot.updated { background: #3b82f6; }
+
+        .activity-details h4 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-details p {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-details .time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .footer {
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+
+        .footer p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .welcome-section h2 {
+                font-size: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i data-lucide="ticket"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Panel IT</h1>
+                    <p>Zarządzanie zgłoszeniami</p>
+                </div>
+            </div>
+            <a href="/logout" class="logout-btn">
+                <i data-lucide="log-out"></i>
+                <span>Wyloguj</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2>Witaj ponownie! 👋</h2>
+            <p>Zarządzaj swoimi zgłoszeniami IT w jednym miejscu</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Otwarte zgłoszenia</p>
+                        <p>12</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="clock" style="color: #3b82f6;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Rozwiązane dzisiaj</p>
+                        <p>8</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="check-circle" style="color: #10b981;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Wszystkie zgłoszenia</p>
+                        <p>45</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="ticket" style="color: #8b5cf6;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p>Aktywność</p>
+                        <p>94%</p>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="activity" style="color: #f59e0b;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <h3>Szybkie akcje</h3>
+            <div class="actions-grid">
+                <button class="action-card add-ticket" onclick="location.href='/add-ticket'">
+                    <div class="action-header">
+                        <div>
+                            <h3>Dodaj zgłoszenie</h3>
+                            <p>Zgłoś nowy problem lub żądanie</p>
+                        </div>
+                        <div class="action-icon">
+                            <i data-lucide="plus"></i>
+                        </div>
+                    </div>
+                </button>
+                <button class="action-card list-tickets" onclick="location.href='/list-tickets'">
+                    <div class="action-header">
+                        <div>
+                            <h3>Lista zgłoszeń</h3>
+                            <p>Przeglądaj wszystkie swoje zgłoszenia</p>
+                        </div>
+                        <div class="action-icon">
+                            <i data-lucide="list"></i>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-section">
+            <div class="activity-header">
+                <h3>Ostatnia aktywność</h3>
+            </div>
+            <div class="activity-content">
+                <div class="activity-item">
+                    <div class="activity-dot pending"></div>
+                    <div class="activity-details">
+                        <h4>Utworzono zgłoszenie</h4>
+                        <p>Problem z drukarką HP LaserJet</p>
+                        <span class="time">2 godziny temu</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-dot completed"></div>
+                    <div class="activity-details">
+                        <h4>Rozwiązano zgłoszenie</h4>
+                        <p>Resetowanie hasła użytkownika</p>
+                        <span class="time">5 godzin temu</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-dot updated"></div>
+                    <div class="activity-details">
+                        <h4>Komentarz dodany</h4>
+                        <p>Dodatkowe informacje do zgłoszenia #1234</p>
+                        <span class="time">1 dzień temu</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>© 2025 Panel IT. Wszystkie prawa zastrzeżone.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
