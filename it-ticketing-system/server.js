@@ -50,42 +50,15 @@ const users = [
         password: bcrypt.hashSync('anna123', 10),
         role: 'user',
         name: 'Anna Nowak'
+    },
+    { 
+        email: 'brajan.alterman@magtrans.eu', 
+        password: bcrypt.hashSync('brajan123', 10),
+        role: 'admin',
+        name: 'Brajan Alterman'
     }
 ];
 
-// Tymczasowa baza zgłoszeń (w przyszłości Google Sheets)
-let tickets = [
-    {
-        id: 1,
-        problem: 'Komputer',
-        description: 'Komputer nie uruchamia się po wczorajszej aktualizacji systemu. Pojawia się niebieski ekran.',
-        email: 'user@example.com',
-        userEmail: 'user@example.com',
-        date: new Date('2025-01-27T10:30:00Z').toISOString(),
-        status: 'Otwarte',
-        priority: 'Wysoki'
-    },
-    {
-        id: 2,
-        problem: 'Drukarka',
-        description: 'Drukarka HP LaserJet nie drukuje dokumentów. Lampka błędu świeci się na czerwono.',
-        email: 'anna@example.com',
-        userEmail: 'anna@example.com',
-        date: new Date('2025-01-26T14:15:00Z').toISOString(),
-        status: 'W trakcie',
-        priority: 'Normalny'
-    },
-    {
-        id: 3,
-        problem: 'Email',
-        description: 'Nie mogę wysyłać emaili z Outlook. Otrzymuję błąd połączenia z serwerem.',
-        email: 'user@example.com',
-        userEmail: 'user@example.com',
-        date: new Date('2025-01-25T09:45:00Z').toISOString(),
-        status: 'Rozwiązane',
-        priority: 'Normalny'
-    }
-];
 
 // Strona główna (formularz logowania)
 app.get('/', (req, res) => {
@@ -113,43 +86,85 @@ app.get('/user-dashboard', ensureAuthenticated, (req, res) => {
 
 // Strona dodawania zgłoszenia
 app.get('/add-ticket', ensureAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'add-ticket.html'));
+    res.redirect('https://docs.google.com/forms/d/e/1FAIpQLSdH3EXkliHICxTE3KldHeF_bVDV1mJwKm12AyejgkKGx43hCA/viewform?usp=dialog'); 
 });
 
 // Lista zgłoszeń - różna dla admina i użytkownika
 app.get('/list-tickets', ensureAuthenticated, (req, res) => {
-    const userTickets = req.session.user.role === 'admin' 
-        ? tickets 
-        : tickets.filter(ticket => ticket.userEmail === req.session.user.email);
-    
     res.sendFile(path.join(__dirname, 'public', 'list-tickets.html'));
 });
 
 // API endpoint do pobierania zgłoszeń
-app.get('/api/tickets', ensureAuthenticated, (req, res) => {
-    const userTickets = req.session.user.role === 'admin' 
-        ? tickets 
-        : tickets.filter(ticket => ticket.userEmail === req.session.user.email);
-    
-    res.json(userTickets);
+const axios = require('axios'); // npm install axios
+
+app.get('/api/tickets', ensureAuthenticated, async (req, res) => {
+    try {
+        const url = 'https://script.google.com/macros/s/AKfycbzilv-ZS1Umy_NzuBIeIG6YBUvltQkaK7dStexdj7ge/dev';
+        const response = await axios.get(url);
+        const entries = response.data;
+
+        if (!Array.isArray(entries)) {
+            throw new Error('Oczekiwano tablicy wyników z Google Apps Script');
+        }
+
+        const allTickets = entries.map(entry => ({
+            id: entry["ID"],
+            timestamp: entry["Sygnatura czasowa"],
+            problem: entry["Problem"] || entry["Problem "] || "",
+            description: entry["Opis problemu"] || entry["Opis problemu "] || "",
+            email: entry["Adres e-mail"] || "",
+            status: entry["Status"] || "",
+            priority: entry["Priorytet"] || "",
+            date: entry["Data"] || ""
+        }));
+
+        const visibleTickets = req.session.user.role === 'admin'
+            ? allTickets
+            : allTickets.filter(t => t.email === req.session.user.email);
+
+        res.json(visibleTickets);
+
+    } catch (err) {
+        console.error('Błąd pobierania zgłoszeń:', err.message);
+        res.status(500).send('Nie udało się pobrać zgłoszeń z Google Sheets.');
+    }
 });
 
+
+/*
 // API endpoint do pobierania statystyk (tylko admin)
-app.get('/api/stats', ensureAuthenticated, ensureAdmin, (req, res) => {
-    const stats = {
-        total: tickets.length,
-        open: tickets.filter(t => t.status === 'Otwarte').length,
-        inProgress: tickets.filter(t => t.status === 'W trakcie').length,
-        closed: tickets.filter(t => t.status === 'Rozwiązane').length,
-        todayClosed: tickets.filter(t => {
-            const today = new Date().toDateString();
-            const ticketDate = new Date(t.date).toDateString();
-            return t.status === 'Rozwiązane' && ticketDate === today;
-        }).length
-    };
-    res.json(stats);
-});
+app.get('/api/stats', ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        const sheetID = 'TWÓJ_ID_ARKUSZA';
+        const url = `https://spreadsheets.google.com/feeds/list/${sheetID}/od6/public/values?alt=json`;
+        const response = await axios.get(url);
+        const entries = response.data.feed.entry;
 
+        const tickets = entries.map(entry => ({
+            status: entry.gsx$status.$t,
+            date: entry.gsx$data.$t
+        }));
+
+        const today = new Date().toDateString();
+
+        const stats = {
+            total: tickets.length,
+            open: tickets.filter(t => t.status === 'Otwarte').length,
+            inProgress: tickets.filter(t => t.status === 'W trakcie').length,
+            closed: tickets.filter(t => t.status === 'Rozwiązane').length,
+            todayClosed: tickets.filter(t => {
+                const ticketDate = new Date(t.date).toDateString();
+                return t.status === 'Rozwiązane' && ticketDate === today;
+            }).length
+        };
+
+        res.json(stats);
+    } catch (err) {
+        console.error('Błąd statystyk:', err.message);
+        res.status(500).send('Nie udało się pobrać statystyk.');
+    }
+});
+*/
 // API endpoint do pobierania informacji o użytkowniku
 app.get('/api/user', ensureAuthenticated, (req, res) => {
     res.json({
@@ -187,42 +202,6 @@ app.post('/login', (req, res) => {
     }
 });
 
-// Obsługa dodawania zgłoszenia
-app.post('/submit-ticket', ensureAuthenticated, (req, res) => {
-    const { problem, description, priority } = req.body;
-    
-    const newTicket = {
-        id: tickets.length + 1,
-        problem,
-        description,
-        email: req.session.user.email,
-        userEmail: req.session.user.email,
-        date: new Date().toISOString(),
-        status: 'Otwarte',
-        priority: priority || 'Normalny'
-    };
-    
-    tickets.push(newTicket);
-    
-    res.send(`
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Zgłoszenie wysłane</title>
-            <link rel="stylesheet" href="style.css">
-        </head>
-        <body>
-            <div class="container">
-                <h1>✅ Zgłoszenie wysłane</h1>
-                <p>Twoje zgłoszenie zostało przyjęte i otrzymało numer #${newTicket.id}</p>
-                <p>Oczekuj na kontakt od zespołu IT.</p>
-                <button onclick="location.href='/dashboard'">Wróć do panelu</button>
-                <button onclick="location.href='/list-tickets'">Zobacz swoje zgłoszenia</button>
-            </div>
-        </body>
-        </html>
-    `);
-});
 
 // Wylogowanie
 app.get('/logout', (req, res) => {

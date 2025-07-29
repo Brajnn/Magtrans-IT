@@ -89,29 +89,64 @@
         lucide.createIcons();
 
         let allTickets = [];
-        let currentUser = null;
+    let currentUser = null;
 
-        // Load user info and tickets
-        Promise.all([
-            fetch('/api/user').then(r => r.json()),
-            fetch('/api/tickets').then(r => r.json())
-        ]).then(([user, tickets]) => {
-            currentUser = user;
-            allTickets = tickets;
-            
-            // Update page title based on user role
-            if (user.role === 'admin') {
-                document.getElementById('pageTitle').textContent = 'Wszystkie zgłoszenia';
-                document.getElementById('pageDescription').textContent = 'Zarządzaj wszystkimi zgłoszeniami w systemie';
-                document.getElementById('pageSubtitle').textContent = 'Panel administratora';
-            }
-            
-            renderTickets(allTickets);
-        }).catch(error => {
-            console.error('Error loading data:', error);
-            document.getElementById('ticketsList').innerHTML = '<p class="error">Błąd ładowania zgłoszeń</p>';
-        });
+fetch('/api/user')
+    .then(res => res.json())
+    .then(user => {
+        currentUser = user;
+        return fetch('/api/tickets');
+    })
+    .then(res => res.json())
+    .then(tickets => {
+        allTickets = tickets.map(t => ({
+            id: t.id || '',
+            description: t.description || t["opis problemu"] || '',
+            status: t.status || 'Otwarte',
+            priority: t.priority || t.priorytet || 'Normalny',
+            date: t.date || t["sygnatura czasowa"] || '',
+            email: t.email || '',
+            problem: t.problem || 'Inne'
+        }));
 
+        if (currentUser.role === 'admin') {
+            document.getElementById('pageTitle').textContent = 'Wszystkie zgłoszenia';
+            document.getElementById('pageDescription').textContent = 'Zarządzaj wszystkimi zgłoszeniami w systemie';
+            document.getElementById('pageSubtitle').textContent = 'Panel administratora';
+        }
+
+        renderTickets(allTickets);
+    })
+    .catch(error => {
+        console.error('Błąd ładowania zgłoszeń:', error);
+        document.getElementById('ticketsList').innerHTML = '<p class="error">Błąd ładowania zgłoszeń</p>';
+    });
+
+fetch('/api/tickets')
+  .then(response => response.json())
+    .then(tickets => {
+    allTickets = tickets.map(t => ({
+        id: t.id || '',
+        description: t["opis problemu"] || '',
+        status: t.status || 'Otwarte',
+        priority: t.priorytet || 'Normalny',
+        date: t.data || t["sygnatura czasowa"] || '',
+        email: t.email || '',
+        problem: t.problem || 'Inne'
+    }));
+
+    if (currentUser.role === 'admin') {
+      document.getElementById('pageTitle').textContent = 'Wszystkie zgłoszenia';
+      document.getElementById('pageDescription').textContent = 'Zarządzaj wszystkimi zgłoszeniami w systemie';
+      document.getElementById('pageSubtitle').textContent = 'Panel administratora';
+    }
+
+    renderTickets(allTickets);
+  })
+  .catch(error => {
+    console.error('Błąd ładowania zgłoszeń:', error);
+    document.getElementById('ticketsList').innerHTML = '<p class="error">Błąd ładowania zgłoszeń</p>';
+  });
         function renderTickets(tickets) {
             const ticketsList = document.getElementById('ticketsList');
             const ticketsCount = document.getElementById('ticketsCount');
@@ -240,7 +275,15 @@
             fetch('/api/tickets')
                 .then(response => response.json())
                 .then(tickets => {
-                    allTickets = tickets;
+                    allTickets = tickets.map(t => ({
+                    id: t.id || '',
+                    description: t["opis problemu"] || '',
+                    status: t.status || 'Otwarte',
+                    priority: t.priorytet || 'Normalny',
+                    date: t.data || t["sygnatura czasowa"] || '',
+                    email: t.email || '',
+                    problem: t.problem || 'Inne'
+                    }));
                     applyFilters();
                     refreshBtn.style.animation = '';
                 })
